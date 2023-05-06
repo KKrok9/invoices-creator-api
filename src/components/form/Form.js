@@ -68,7 +68,7 @@ const Form = ({ invoices, setInvoices }) => {
       tax_id: values.tax_id.value,
       company_name: values.company_name.value,
       address: values.address.value,
-      price_per_unit: values.company_name.value,
+      price_per_unit: values.price_per_unit.value,
       quantity: values.quantity.value,
       price_gross: values.price_gross.value,
     };
@@ -78,7 +78,7 @@ const Form = ({ invoices, setInvoices }) => {
   return (
     <div className={styles["form-container"]}>
       <form className={styles["form"]} onSubmit={formSubmitHandler}>
-        <h1 className={styles["form-header"]}>ADD INVOICE FORM</h1>
+        <h1 className={styles["form-header"]}>ADD INVOICE</h1>
         <div className={styles["form-1st--row"]}>
           <CustomInput
             label={values.tax_id.label}
