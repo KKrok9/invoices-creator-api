@@ -5,7 +5,7 @@ import SendIcon from "@mui/icons-material/Send";
 const CustomButton = (props) => {
   const { label, ...rest } = props;
   const ButtonStyles = {
-    width: "20%",
+    width: "40%",
     height: "50%",
     fontSize: "large",
     backgroundColor: "#0085EC",
@@ -21,7 +21,7 @@ const CustomButton = (props) => {
     },
   };
   return (
-    <Button sx={ButtonStyles} {...rest} endIcon={<SendIcon />}>
+    <Button sx={ButtonStyles} {...rest}>
       {label}
     </Button>
   );

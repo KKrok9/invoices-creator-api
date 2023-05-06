@@ -9,10 +9,16 @@ const InputStyles = {
 };
 
 const CustomInput = (props) => {
-  const { label, ...rest } = props;
-
+  const { label, readOnlyMode, ...rest } = props;
+  const readOnly = readOnlyMode ? true : false;
   return (
-    <TextField label={label} variant="outlined" {...rest} sx={InputStyles}>
+    <TextField
+      label={label}
+      variant="outlined"
+      inputProps={{ readOnly }}
+      {...rest}
+      sx={InputStyles}
+    >
       {label}
     </TextField>
   );
