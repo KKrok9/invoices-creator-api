@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styles from "../../styles/Form.module.css";
 import CustomInput from "../custom-components/CustomInput";
 import CustomButton from "../custom-components/CustomButton";
 import SendIcon from "@mui/icons-material/Send";
+import { isEmpty } from "../../utils/Validation";
+
 const Form = ({ invoices, setInvoices }) => {
-  const [values, setValues] = useState({
+  const initialFormValues = {
     tax_id: {
       label: "Tax ID",
       has_error: "",
@@ -35,7 +37,12 @@ const Form = ({ invoices, setInvoices }) => {
       has_error: "",
       value: "",
     },
-  });
+  };
+
+  const [values, setValues] = useState(initialFormValues);
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [isFormSubmit, setIsFormSubmit] = useState(false);
+  const [clickCounter, setClickCounter] = useState(0);
 
   const handleChange = (fieldName) => (event) => {
     const { value } = event.target;
@@ -48,52 +55,121 @@ const Form = ({ invoices, setInvoices }) => {
     }));
   };
 
-  const handlePriceGrossChange = () => {
+  const handleErrorChange = (fieldName, hasError) => {
     setValues((prevValues) => ({
       ...prevValues,
-      price_gross: {
-        ...prevValues.price_gross,
-        value: values.price_per_unit.value * values.quantity.value,
+      [fieldName]: {
+        ...prevValues[fieldName],
+        has_error: hasError,
       },
     }));
   };
 
+  const checkErrors = () => {
+    if (clickCounter > 0) {
+      handleErrorChange("tax_id", isEmpty(values.tax_id.value));
+      handleErrorChange("company_name", isEmpty(values.company_name.value));
+      handleErrorChange("address", isEmpty(values.address.value));
+      handleErrorChange("price_per_unit", isEmpty(values.price_per_unit.value));
+      handleErrorChange("quantity", isEmpty(values.quantity.value));
+    }
+  };
+
   useEffect(() => {
-    handlePriceGrossChange();
+    checkErrors();
+  }, [clickCounter]);
+
+  const checkFormValidity = useCallback(() => {
+    if (
+      values.tax_id.has_error === false &&
+      values.company_name.has_error === false &&
+      values.address.has_error === false &&
+      values.price_per_unit.has_error === false &&
+      values.quantity.has_error === false
+    ) {
+      setIsFormValid(true);
+    } else {
+      setIsFormValid(false);
+    }
+  }, [
+    values.tax_id.has_error,
+    values.company_name.has_error,
+    values.address.has_error,
+    values.price_per_unit.has_error,
+    values.quantity.has_error,
+  ]);
+  useEffect(() => {
+    checkFormValidity();
+  }, [checkFormValidity]);
+
+  const handlePriceGrossChange = () => {
+    const pricePerUnit = values.price_per_unit.value;
+    const quantity = values.quantity.value;
+
+    if (pricePerUnit && quantity) {
+      setValues((prevValues) => ({
+        ...prevValues,
+        price_gross: {
+          ...prevValues.price_gross,
+          value: pricePerUnit * quantity,
+        },
+      }));
+    }
+  };
+
+  const resetFormValues = () => {
+    setValues(initialFormValues);
+  };
+
+  useEffect(() => {
+    if (values.price_per_unit.value !== "" && values.quantity.value !== "") {
+      handlePriceGrossChange();
+    }
   }, [values.price_per_unit.value, values.quantity.value]);
 
-  const formSubmitHandler = (event) => {
+  useEffect(() => {
+    if (isFormValid && isFormSubmit) {
+      const newInvoice = {
+        tax_id: values.tax_id.value,
+        company_name: values.company_name.value,
+        address: values.address.value,
+        price_per_unit: values.price_per_unit.value,
+        quantity: values.quantity.value,
+        price_gross: values.price_gross.value,
+      };
+      setInvoices((prevInvoices) => [...prevInvoices, newInvoice]);
+      resetFormValues();
+    }
+  }, [isFormValid]);
+
+  const handleSubmit = (event) => {
     event.preventDefault();
-    const newInvoice = {
-      tax_id: values.tax_id.value,
-      company_name: values.company_name.value,
-      address: values.address.value,
-      price_per_unit: values.price_per_unit.value,
-      quantity: values.quantity.value,
-      price_gross: values.price_gross.value,
-    };
-    setInvoices((prevInvoices) => [...prevInvoices, newInvoice]);
+    setClickCounter(clickCounter + 1);
+    setIsFormSubmit(true);
   };
 
   return (
     <div className={styles["form-container"]}>
-      <form className={styles["form"]} onSubmit={formSubmitHandler}>
+      <form className={styles["form"]} onSubmit={handleSubmit}>
         <h1 className={styles["form-header"]}>ADD INVOICE</h1>
         <div className={styles["form-1st--row"]}>
           <CustomInput
             label={values.tax_id.label}
             value={values.tax_id.value}
             onChange={handleChange("tax_id")}
+            hasError={values.tax_id.has_error}
           ></CustomInput>
           <CustomInput
             label={values.company_name.label}
             value={values.company_name.value}
             onChange={handleChange("company_name")}
+            hasError={values.company_name.has_error}
           ></CustomInput>
           <CustomInput
             label={values.address.label}
             value={values.address.value}
             onChange={handleChange("address")}
+            hasError={values.address.has_error}
           ></CustomInput>
         </div>
         <div className={styles["form-2nd--row"]}>
@@ -101,6 +177,7 @@ const Form = ({ invoices, setInvoices }) => {
             label={values.price_per_unit.label}
             value={values.price_per_unit.value}
             onChange={handleChange("price_per_unit")}
+            hasError={values.price_per_unit.has_error}
             type="number"
             min="0"
           ></CustomInput>
@@ -109,6 +186,7 @@ const Form = ({ invoices, setInvoices }) => {
             value={values.quantity.value}
             type="number"
             onChange={handleChange("quantity")}
+            hasError={values.quantity.has_error}
             min="0"
           ></CustomInput>
           <CustomInput

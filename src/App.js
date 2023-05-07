@@ -5,9 +5,6 @@ import { useState, useEffect } from "react";
 
 function App() {
   const [invoices, setInvoices] = useState([]);
-  useEffect(() => {
-    console.log(invoices);
-  }, [invoices]);
   return (
     <div className="App">
       <Form invoices={invoices} setInvoices={setInvoices}></Form>
