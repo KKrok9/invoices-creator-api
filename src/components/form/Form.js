@@ -4,6 +4,9 @@ import CustomInput from "../custom-components/CustomInput";
 import CustomButton from "../custom-components/CustomButton";
 import SendIcon from "@mui/icons-material/Send";
 import { isEmpty } from "../../utils/Validation";
+import { API_URL } from "../../constants/Api";
+import axios from "axios";
+const url = new URL(API_URL);
 
 const Form = ({ invoices, setInvoices }) => {
   const initialFormValues = {
@@ -43,9 +46,20 @@ const Form = ({ invoices, setInvoices }) => {
   const [isFormValid, setIsFormValid] = useState(false);
   const [isFormSubmit, setIsFormSubmit] = useState(false);
   const [clickCounter, setClickCounter] = useState(0);
+  const [filteredObjects, setFilteredObjects] = useState([]);
 
   const handleChange = (fieldName) => (event) => {
     const { value } = event.target;
+    setValues((prevValues) => ({
+      ...prevValues,
+      [fieldName]: {
+        ...prevValues[fieldName],
+        value: value,
+      },
+    }));
+  };
+
+  const handleValueChange = (fieldName, value) => {
     setValues((prevValues) => ({
       ...prevValues,
       [fieldName]: {
@@ -63,6 +77,34 @@ const Form = ({ invoices, setInvoices }) => {
         has_error: hasError,
       },
     }));
+  };
+
+  const onBlurHandler = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      const filteredData = response.data.filter((obj) => {
+        const taxID = obj.tax_id;
+        if (values.tax_id.value === "") {
+          return false;
+        } else {
+          return taxID.startsWith(values.tax_id.value);
+        }
+      });
+      setFilteredObjects(filteredData);
+      if (filteredData.length !== 0) {
+        const createdAddress = filteredData[0].city.concat(
+          ", ",
+          filteredData[0].street
+        );
+        console.log(filteredData);
+        handleValueChange("tax_id", filteredData[0].tax_id);
+        handleValueChange("address", createdAddress);
+        handleValueChange("company_name", filteredData[0].company_name);
+      }
+      console.log(filteredObjects);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
 
   const checkErrors = () => {
@@ -111,7 +153,9 @@ const Form = ({ invoices, setInvoices }) => {
         ...prevValues,
         price_gross: {
           ...prevValues.price_gross,
-          value: pricePerUnit * quantity,
+          value: (parseFloat(pricePerUnit) * parseInt(quantity) * 1.23).toFixed(
+            2
+          ),
         },
       }));
     }
@@ -158,6 +202,7 @@ const Form = ({ invoices, setInvoices }) => {
             value={values.tax_id.value}
             onChange={handleChange("tax_id")}
             hasError={values.tax_id.has_error}
+            onBlur={onBlurHandler}
           ></CustomInput>
           <CustomInput
             label={values.company_name.label}
